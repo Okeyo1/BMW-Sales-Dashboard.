@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMW Global Sales Dashboard 2018–2025</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c12;
+    --surface: #111420;
+    --surface2: #181d2e;
+    --border: #1e2540;
+    --accent: #1c6ef3;
+    --accent2: #00d4aa;
+    --accent3: #f59e0b;
+    --accent4: #ef4444;
+    --text: #e8eaf6;
+    --muted: #8892b0;
+    --ice: #3b82f6;
+    --bev: #10b981;
+    --china: #f97316;
+    --europe: #8b5cf6;
+    --usa: #ec4899;
+    --row: #06b6d4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0d1220 0%, #101830 50%, #0a0c1a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  .header-left { display: flex; align-items: center; gap: 20px; }
+  .bmw-logo {
+    width: 52px; height: 52px;
+    background: linear-gradient(145deg, #1c6ef3, #0a4fd4);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: 1px;
+    color: white;
+    box-shadow: 0 0 20px rgba(28,110,243,0.4);
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .bmw-logo::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%; width: 50%; height: 50%;
+    background: white; opacity: 0.12;
+    border-radius: 0 50% 0 0;
+  }
+  .bmw-logo::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 50%; width: 50%; height: 50%;
+    background: white; opacity: 0.12;
+    border-radius: 0 0 50% 0;
+  }
+  .header-title h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    background: linear-gradient(90deg, #fff, #8892b0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header-title p {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .header-badge {
+    background: rgba(28,110,243,0.12);
+    border: 1px solid rgba(28,110,243,0.3);
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  /* SLICERS */
+  .slicers-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .slicer-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .slicer-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .slicer-sep { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
+  .slicer-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .slicer-btn:hover { border-color: var(--accent); color: var(--text); }
+  .slicer-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    box-shadow: 0 0 12px rgba(28,110,243,0.35);
+  }
+  .slicer-btn.region-china.active { background: var(--china); border-color: var(--china); box-shadow: 0 0 12px rgba(249,115,22,0.35); }
+  .slicer-btn.region-europe.active { background: var(--europe); border-color: var(--europe); box-shadow: 0 0 12px rgba(139,92,246,0.35); }
+  .slicer-btn.region-usa.active { background: var(--usa); border-color: var(--usa); box-shadow: 0 0 12px rgba(236,72,153,0.35); }
+  .slicer-btn.region-row.active { background: var(--row); border-color: var(--row); box-shadow: 0 0 12px rgba(6,182,212,0.35); }
+  .reset-btn {
+    background: transparent;
+    border: 1px solid rgba(239,68,68,0.4);
+    color: #ef4444;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .reset-btn:hover { background: rgba(239,68,68,0.1); }
+
+  /* MAIN LAYOUT */
+  .dashboard { padding: 24px 32px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* KPI CARDS */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .kpi-card.blue::before { background: linear-gradient(90deg, var(--accent), transparent); }
+  .kpi-card.green::before { background: linear-gradient(90deg, var(--bev), transparent); }
+  .kpi-card.amber::before { background: linear-gradient(90deg, var(--accent3), transparent); }
+  .kpi-card.pink::before { background: linear-gradient(90deg, var(--usa), transparent); }
+  .kpi-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    letter-spacing: 1px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .kpi-card.blue .kpi-value { color: var(--accent); }
+  .kpi-card.green .kpi-value { color: var(--bev); }
+  .kpi-card.amber .kpi-value { color: var(--accent3); }
+  .kpi-card.pink .kpi-value { color: var(--usa); }
+  .kpi-sub { font-size: 11px; color: var(--muted); }
+  .kpi-delta {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 11px; font-weight: 500;
+    margin-top: 6px;
+  }
+  .kpi-delta.up { color: var(--bev); }
+  .kpi-delta.down { color: var(--accent4); }
+  .kpi-icon {
+    position: absolute; right: 18px; top: 18px;
+    font-size: 22px; opacity: 0.12;
+  }
+  .kpi-sparkline { margin-top: 10px; height: 36px; }
+
+  /* CHART GRID */
+  .chart-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart-grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .chart-card .chart-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .chart-card .chart-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .chart-wrap { position: relative; }
+
+  /* REGION TABLE */
+  .region-table { width: 100%; border-collapse: collapse; }
+  .region-table th {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-align: left;
+    padding: 0 0 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .region-table th:not(:first-child) { text-align: right; }
+  .region-table td {
+    padding: 9px 0;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(30,37,64,0.5);
+  }
+  .region-table td:not(:first-child) { text-align: right; }
+  .region-table tr:last-child td { border-bottom: none; }
+  .region-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 7px;
+  }
+  .region-bar-wrap { margin-top: 6px; }
+  .region-bar {
+    height: 3px;
+    border-radius: 2px;
+    margin-top: 2px;
+  }
+  .bold-num { font-weight: 700; font-size: 13px; }
+
+  /* LEGEND */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* FOOTER */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* Loading animation */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .loading { animation: pulse 1.5s infinite; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <div class="bmw-logo">BMW</div>
+    <div class="header-title">
+      <h1>Global Sales Intelligence</h1>
+      <p>BMW Group · 2018 – 2025 · All Markets</p>
+    </div>
+  </div>
+  <span class="header-badge">Live Dashboard</span>
+</header>
+
+<!-- SLICERS -->
+<div class="slicers-bar">
+  <span class="slicer-label">Year</span>
+  <div class="slicer-group" id="year-slicers"></div>
+
+  <div class="slicer-sep"></div>
+  <span class="slicer-label">Region</span>
+  <div class="slicer-group" id="region-slicers">
+    <button class="slicer-btn region-china active" data-region="China">China</button>
+    <button class="slicer-btn region-europe active" data-region="Europe">Europe</button>
+    <button class="slicer-btn region-usa active" data-region="USA">USA</button>
+    <button class="slicer-btn region-row active" data-region="RestOfWorld">Rest of World</button>
+  </div>
+
+  <div class="slicer-sep"></div>
+  <span class="slicer-label">Model</span>
+  <div class="slicer-group" id="model-slicers"></div>
+
+  <div class="slicer-sep"></div>
+  <button class="reset-btn" id="reset-btn">✕ Reset</button>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard">
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi-card blue">
+      <div class="kpi-icon">🚗</div>
+      <div class="kpi-label">Total Units Sold</div>
+      <div class="kpi-value" id="kpi-units">—</div>
+      <div class="kpi-sub" id="kpi-units-sub">across all regions</div>
+      <div class="kpi-delta up" id="kpi-units-delta">↑ —</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">⚡</div>
+      <div class="kpi-label">EV Penetration Rate</div>
+      <div class="kpi-value" id="kpi-bev">—</div>
+      <div class="kpi-sub" id="kpi-bev-sub">battery electric vehicles</div>
+      <div class="kpi-delta up" id="kpi-bev-delta">↑ —</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-icon">💶</div>
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value" id="kpi-rev">—</div>
+      <div class="kpi-sub" id="kpi-rev-sub">EUR (billions)</div>
+      <div class="kpi-delta up" id="kpi-rev-delta">↑ —</div>
+    </div>
+    <div class="kpi-card pink">
+      <div class="kpi-icon">🏆</div>
+      <div class="kpi-label">Top Region</div>
+      <div class="kpi-value" id="kpi-top-region" style="font-size:26px">—</div>
+      <div class="kpi-sub" id="kpi-top-region-sub">leading market</div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Sales Trend + BEV vs ICE -->
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Annual Sales Volume</div>
+      <div class="chart-sub">Total units sold per year · all selected regions</div>
+      <div class="chart-wrap"><canvas id="salesTrendChart" height="200"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">BEV vs ICE Split</div>
+      <div class="chart-sub">Electric vs combustion engine · units sold</div>
+      <div class="chart-wrap"><canvas id="bevIceChart" height="200"></canvas></div>
+      <div class="legend" style="margin-top:12px">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--bev)"></div> Battery Electric (BEV)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--ice)"></div> Internal Combustion (ICE)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3: Region Bar + Donut -->
+  <div class="chart-grid-3">
+    <div class="chart-card">
+      <div class="chart-title">Sales By Region · Year-over-Year</div>
+      <div class="chart-sub">Stacked units sold per region across selected years</div>
+      <div class="chart-wrap"><canvas id="regionStackedChart" height="210"></canvas></div>
+      <div class="legend" id="region-legend" style="margin-top:12px"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Market Share</div>
+      <div class="chart-sub">Contribution by region</div>
+      <div class="chart-wrap" style="max-width:240px;margin:0 auto"><canvas id="regionDonutChart" height="220"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW 4: Model breakdown + Region Table -->
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Sales By Model</div>
+      <div class="chart-sub">Units sold by vehicle model across selected period</div>
+      <div class="chart-wrap"><canvas id="modelChart" height="200"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Regional Breakdown</div>
+      <div class="chart-sub">Key metrics by market</div>
+      <div style="overflow-x:auto">
+        <table class="region-table" id="region-table">
+          <thead>
+            <tr>
+              <th>Region</th>
+              <th>Units Sold</th>
+              <th>Revenue (€B)</th>
+              <th>Share</th>
+            </tr>
+          </thead>
+          <tbody id="region-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 5: BEV growth line -->
+  <div class="chart-card">
+    <div class="chart-title">EV Adoption Trajectory</div>
+    <div class="chart-sub">BEV share % growth over time · compared across regions</div>
+    <div class="chart-wrap"><canvas id="bevTrendChart" height="150"></canvas></div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>BMW Global Sales Dashboard · 2018–2025</span>
+  <span id="footer-info">Showing all data</span>
+  <span>Source: BMW Group Sales Data</span>
+</div>
+
+<script>
+// ===================== RAW DATA =====================
+const RAW = {
+  by_year: [
+    {Year:2018,Units_Sold:2765193,Revenue:176775218399,BEV_Share:0.0207},
+    {Year:2019,Units_Sold:2759838,Revenue:176552428685,BEV_Share:0.0443},
+    {Year:2020,Units_Sold:3036556,Revenue:195638067880,BEV_Share:0.0704},
+    {Year:2021,Units_Sold:3036564,Revenue:194292936404,BEV_Share:0.0950},
+    {Year:2022,Units_Sold:3083306,Revenue:197101324263,BEV_Share:0.1200},
+    {Year:2023,Units_Sold:3177788,Revenue:203582572723,BEV_Share:0.1454},
+    {Year:2024,Units_Sold:3293423,Revenue:211471067850,BEV_Share:0.1706},
+    {Year:2025,Units_Sold:3362777,Revenue:215605681914,BEV_Share:0.1943},
+  ],
+  by_region: [
+    {Region:'China',Units_Sold:6256750,Revenue:401755020483},
+    {Region:'Europe',Units_Sold:6045176,Revenue:388878952601},
+    {Region:'RestOfWorld',Units_Sold:6113872,Revenue:391071034606},
+    {Region:'USA',Units_Sold:6099647,Revenue:389314290428},
+  ],
+  by_year_region: [
+    {Year:2018,Region:'China',Units_Sold:675593},{Year:2018,Region:'Europe',Units_Sold:706759},{Year:2018,Region:'RestOfWorld',Units_Sold:699539},{Year:2018,Region:'USA',Units_Sold:683302},
+    {Year:2019,Region:'China',Units_Sold:705400},{Year:2019,Region:'Europe',Units_Sold:643808},{Year:2019,Region:'RestOfWorld',Units_Sold:712178},{Year:2019,Region:'USA',Units_Sold:698452},
+    {Year:2020,Region:'China',Units_Sold:758036},{Year:2020,Region:'Europe',Units_Sold:763239},{Year:2020,Region:'RestOfWorld',Units_Sold:789081},{Year:2020,Region:'USA',Units_Sold:726200},
+    {Year:2021,Region:'China',Units_Sold:804804},{Year:2021,Region:'Europe',Units_Sold:732885},{Year:2021,Region:'RestOfWorld',Units_Sold:760417},{Year:2021,Region:'USA',Units_Sold:738458},
+    {Year:2022,Region:'China',Units_Sold:767549},{Year:2022,Region:'Europe',Units_Sold:794335},{Year:2022,Region:'RestOfWorld',Units_Sold:770698},{Year:2022,Region:'USA',Units_Sold:750724},
+    {Year:2023,Region:'China',Units_Sold:817300},{Year:2023,Region:'Europe',Units_Sold:762112},{Year:2023,Region:'RestOfWorld',Units_Sold:795595},{Year:2023,Region:'USA',Units_Sold:802781},
+    {Year:2024,Region:'China',Units_Sold:840879},{Year:2024,Region:'Europe',Units_Sold:817211},{Year:2024,Region:'RestOfWorld',Units_Sold:809122},{Year:2024,Region:'USA',Units_Sold:826211},
+    {Year:2025,Region:'China',Units_Sold:887189},{Year:2025,Region:'Europe',Units_Sold:824827},{Year:2025,Region:'RestOfWorld',Units_Sold:777242},{Year:2025,Region:'USA',Units_Sold:873519},
+  ],
+  by_model: [
+    {Model:'3 Series',Units_Sold:3006048},{Model:'5 Series',Units_Sold:3052524},{Model:'MINI',Units_Sold:2971205},
+    {Model:'X3',Units_Sold:3025861},{Model:'X5',Units_Sold:3085134},{Model:'X7',Units_Sold:3112074},
+    {Model:'i4',Units_Sold:3125687},{Model:'iX',Units_Sold:3136912},
+  ],
+  by_year_model: [
+    {Year:2018,Model:'3 Series',Units_Sold:339205},{Year:2018,Model:'5 Series',Units_Sold:333226},{Year:2018,Model:'MINI',Units_Sold:316942},{Year:2018,Model:'X3',Units_Sold:373438},{Year:2018,Model:'X5',Units_Sold:367367},{Year:2018,Model:'X7',Units_Sold:333322},{Year:2018,Model:'i4',Units_Sold:365168},{Year:2018,Model:'iX',Units_Sold:336525},
+    {Year:2019,Model:'3 Series',Units_Sold:338718},{Year:2019,Model:'5 Series',Units_Sold:333305},{Year:2019,Model:'MINI',Units_Sold:346896},{Year:2019,Model:'X3',Units_Sold:344350},{Year:2019,Model:'X5',Units_Sold:365643},{Year:2019,Model:'X7',Units_Sold:354071},{Year:2019,Model:'i4',Units_Sold:344255},{Year:2019,Model:'iX',Units_Sold:332600},
+    {Year:2020,Model:'3 Series',Units_Sold:374480},{Year:2020,Model:'5 Series',Units_Sold:371169},{Year:2020,Model:'MINI',Units_Sold:358829},{Year:2020,Model:'X3',Units_Sold:387281},{Year:2020,Model:'X5',Units_Sold:371010},{Year:2020,Model:'X7',Units_Sold:405758},{Year:2020,Model:'i4',Units_Sold:384040},{Year:2020,Model:'iX',Units_Sold:383989},
+    {Year:2021,Model:'3 Series',Units_Sold:366190},{Year:2021,Model:'5 Series',Units_Sold:380406},{Year:2021,Model:'MINI',Units_Sold:391089},{Year:2021,Model:'X3',Units_Sold:370676},{Year:2021,Model:'X5',Units_Sold:355531},{Year:2021,Model:'X7',Units_Sold:401217},{Year:2021,Model:'i4',Units_Sold:378114},{Year:2021,Model:'iX',Units_Sold:393341},
+    {Year:2022,Model:'3 Series',Units_Sold:377207},{Year:2022,Model:'5 Series',Units_Sold:375692},{Year:2022,Model:'MINI',Units_Sold:390754},{Year:2022,Model:'X3',Units_Sold:375904},{Year:2022,Model:'X5',Units_Sold:398578},{Year:2022,Model:'X7',Units_Sold:381039},{Year:2022,Model:'i4',Units_Sold:379254},{Year:2022,Model:'iX',Units_Sold:404878},
+    {Year:2023,Model:'3 Series',Units_Sold:409330},{Year:2023,Model:'5 Series',Units_Sold:425485},{Year:2023,Model:'MINI',Units_Sold:347272},{Year:2023,Model:'X3',Units_Sold:396601},{Year:2023,Model:'X5',Units_Sold:379307},{Year:2023,Model:'X7',Units_Sold:380132},{Year:2023,Model:'i4',Units_Sold:423891},{Year:2023,Model:'iX',Units_Sold:415770},
+    {Year:2024,Model:'3 Series',Units_Sold:377310},{Year:2024,Model:'5 Series',Units_Sold:401378},{Year:2024,Model:'MINI',Units_Sold:413585},{Year:2024,Model:'X3',Units_Sold:390077},{Year:2024,Model:'X5',Units_Sold:399983},{Year:2024,Model:'X7',Units_Sold:426857},{Year:2024,Model:'i4',Units_Sold:459728},{Year:2024,Model:'iX',Units_Sold:424505},
+    {Year:2025,Model:'3 Series',Units_Sold:423608},{Year:2025,Model:'5 Series',Units_Sold:431863},{Year:2025,Model:'MINI',Units_Sold:405838},{Year:2025,Model:'X3',Units_Sold:387534},{Year:2025,Model:'X5',Units_Sold:447715},{Year:2025,Model:'X7',Units_Sold:429678},{Year:2025,Model:'i4',Units_Sold:391237},{Year:2025,Model:'iX',Units_Sold:445304},
+  ],
+  bev_ice_year: [
+    {Year:2018,BEV_Units:56436,ICE_Units:2708757},
+    {Year:2019,BEV_Units:122573,ICE_Units:2637265},
+    {Year:2020,BEV_Units:213540,ICE_Units:2823016},
+    {Year:2021,BEV_Units:288468,ICE_Units:2748096},
+    {Year:2022,BEV_Units:369474,ICE_Units:2713832},
+    {Year:2023,BEV_Units:461743,ICE_Units:2716045},
+    {Year:2024,BEV_Units:562151,ICE_Units:2731272},
+    {Year:2025,BEV_Units:653005,ICE_Units:2709772},
+  ],
+  bev_by_year_region: {
+    China:   [0.021,0.035,0.058,0.080,0.115,0.148,0.178,0.210],
+    Europe:  [0.025,0.052,0.085,0.112,0.130,0.158,0.185,0.215],
+    USA:     [0.012,0.030,0.060,0.085,0.105,0.130,0.158,0.182],
+    RestOfWorld:[0.015,0.040,0.065,0.090,0.118,0.142,0.162,0.178],
+  }
+};
+
+const YEARS = [2018,2019,2020,2021,2022,2023,2024,2025];
+const ALL_REGIONS = ['China','Europe','USA','RestOfWorld'];
+const ALL_MODELS = ['3 Series','5 Series','MINI','X3','X5','X7','i4','iX'];
+
+const REGION_COLORS = {
+  China: '#f97316', Europe: '#8b5cf6', USA: '#ec4899', RestOfWorld: '#06b6d4'
+};
+const REGION_LABELS = { China:'China', Europe:'Europe', USA:'USA', RestOfWorld:'Rest of World' };
+const MODEL_COLORS = [
+  '#1c6ef3','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'
+];
+
+// STATE
+let state = {
+  years: new Set(YEARS),
+  regions: new Set(ALL_REGIONS),
+  models: new Set(ALL_MODELS),
+};
+
+// CHARTS
+let charts = {};
+
+// ===================== BUILD SLICERS =====================
+function buildSlicers() {
+  const yearDiv = document.getElementById('year-slicers');
+  YEARS.forEach(y => {
+    const btn = document.createElement('button');
+    btn.className = 'slicer-btn active';
+    btn.textContent = y;
+    btn.dataset.year = y;
+    btn.addEventListener('click', () => {
+      if (state.years.has(y)) {
+        if (state.years.size > 1) { state.years.delete(y); btn.classList.remove('active'); }
+      } else { state.years.add(y); btn.classList.add('active'); }
+      updateAll();
+    });
+    yearDiv.appendChild(btn);
+  });
+
+  document.querySelectorAll('[data-region]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const r = btn.dataset.region;
+      if (state.regions.has(r)) {
+        if (state.regions.size > 1) { state.regions.delete(r); btn.classList.remove('active'); }
+      } else { state.regions.add(r); btn.classList.add('active'); }
+      updateAll();
+    });
+  });
+
+  const modelDiv = document.getElementById('model-slicers');
+  ALL_MODELS.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'slicer-btn active';
+    btn.textContent = m;
+    btn.dataset.model = m;
+    btn.addEventListener('click', () => {
+      if (state.models.has(m)) {
+        if (state.models.size > 1) { state.models.delete(m); btn.classList.remove('active'); }
+      } else { state.models.add(m); btn.classList.add('active'); }
+      updateAll();
+    });
+    modelDiv.appendChild(btn);
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    state.years = new Set(YEARS);
+    state.regions = new Set(ALL_REGIONS);
+    state.models = new Set(ALL_MODELS);
+    document.querySelectorAll('.slicer-btn').forEach(b => b.classList.add('active'));
+    updateAll();
+  });
+}
+
+// ===================== FILTER HELPERS =====================
+function filteredYears() { return YEARS.filter(y => state.years.has(y)); }
+function filteredRegions() { return ALL_REGIONS.filter(r => state.regions.has(r)); }
+
+function getYearTotals() {
+  // units & revenue scaled by region and model selection
+  // Region factor: fraction of total region units
+  const regionFactor = {};
+  ALL_REGIONS.forEach(r => {
+    regionFactor[r] = state.regions.has(r) ? 1 : 0;
+  });
+  const totalRegionUnits = ALL_REGIONS.reduce((s,r) => s + RAW.by_region.find(x=>x.Region===r).Units_Sold, 0);
+  const selectedRegionUnits = ALL_REGIONS.filter(r=>state.regions.has(r)).reduce((s,r) => s + RAW.by_region.find(x=>x.Region===r).Units_Sold, 0);
+  const regionScale = selectedRegionUnits / totalRegionUnits;
+
+  const totalModelUnits = ALL_MODELS.reduce((s,m) => s + RAW.by_model.find(x=>x.Model===m).Units_Sold, 0);
+  const selectedModelUnits = ALL_MODELS.filter(m=>state.models.has(m)).reduce((s,m) => s + RAW.by_model.find(x=>x.Model===m).Units_Sold, 0);
+  const modelScale = selectedModelUnits / totalModelUnits;
+
+  const scale = regionScale * modelScale;
+
+  return filteredYears().map(y => {
+    const row = RAW.by_year.find(x => x.Year === y);
+    return { year: y, units: Math.round(row.Units_Sold * scale), revenue: row.Revenue * scale, bev: row.BEV_Share };
+  });
+}
+
+function getRegionTotals() {
+  return filteredRegions().map(r => {
+    const row = RAW.by_region.find(x => x.Region === r);
+    // scale by year and model
+    const yearFrac = filteredYears().length / YEARS.length;
+    const totalModelUnits = ALL_MODELS.reduce((s,m) => s + RAW.by_model.find(x=>x.Model===m).Units_Sold, 0);
+    const selectedModelUnits = ALL_MODELS.filter(m=>state.models.has(m)).reduce((s,m) => s + RAW.by_model.find(x=>x.Model===m).Units_Sold, 0);
+    const modelScale = selectedModelUnits / totalModelUnits;
+    const scale = yearFrac * modelScale;
+    return { region: r, units: Math.round(row.Units_Sold * scale), revenue: row.Revenue * scale };
+  });
+}
+
+function getBevIceTotals() {
+  const years = filteredYears();
+  const regionFrac = filteredRegions().length / ALL_REGIONS.length;
+  const totalModelUnits = ALL_MODELS.reduce((s,m) => s + RAW.by_model.find(x=>x.Model===m).Units_Sold, 0);
+  const selectedModelUnits = ALL_MODELS.filter(m=>state.models.has(m)).reduce((s,m) => s + RAW.by_model.find(x=>x.Model===m).Units_Sold, 0);
+  const modelScale = selectedModelUnits / totalModelUnits;
+  const scale = regionFrac * modelScale;
+  return years.map(y => {
+    const row = RAW.bev_ice_year.find(x => x.Year === y);
+    return { year: y, bev: Math.round(row.BEV_Units * scale), ice: Math.round(row.ICE_Units * scale) };
+  });
+}
+
+function getModelTotals() {
+  const yearFrac = filteredYears().length / YEARS.length;
+  const regionFrac = filteredRegions().length / ALL_REGIONS.length;
+  const scale = yearFrac * regionFrac;
+  return ALL_MODELS.filter(m => state.models.has(m)).map(m => {
+    const row = RAW.by_model.find(x => x.Model === m);
+    return { model: m, units: Math.round(row.Units_Sold * scale) };
+  });
+}
+
+function getRegionYearMatrix() {
+  const years = filteredYears();
+  const regions = filteredRegions();
+  const totalModelUnits = ALL_MODELS.reduce((s,m) => s + RAW.by_model.find(x=>x.Model===m).Units_Sold, 0);
+  const selectedModelUnits = ALL_MODELS.filter(m=>state.models.has(m)).reduce((s,m) => s + RAW.by_model.find(x=>x.Model===m).Units_Sold, 0);
+  const modelScale = selectedModelUnits / totalModelUnits;
+  return regions.map(r => ({
+    region: r,
+    data: years.map(y => {
+      const row = RAW.by_year_region.find(x => x.Year === y && x.Region === r);
+      return Math.round((row ? row.Units_Sold : 0) * modelScale);
+    })
+  }));
+}
+
+// ===================== KPI UPDATE =====================
+function fmtNum(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
+  return n.toString();
+}
+
+function updateKPIs() {
+  const yt = getYearTotals();
+  const totalUnits = yt.reduce((s,r) => s + r.units, 0);
+  const totalRevenue = yt.reduce((s,r) => s + r.revenue, 0);
+  const avgBEV = yt.length ? yt.reduce((s,r) => s + r.bev, 0) / yt.length : 0;
+
+  document.getElementById('kpi-units').textContent = fmtNum(totalUnits);
+  document.getElementById('kpi-units-sub').textContent = `${filteredRegions().length} region(s) · ${filteredYears().length} year(s)`;
+
+  const firstBev = yt[0]?.bev || 0; const lastBev = yt[yt.length-1]?.bev || 0;
+  const bevGrowth = ((lastBev - firstBev) / (firstBev||1) * 100).toFixed(0);
+  document.getElementById('kpi-bev').textContent = (avgBEV * 100).toFixed(1) + '%';
+  document.getElementById('kpi-bev-sub').textContent = 'avg BEV share of total sales';
+  document.getElementById('kpi-bev-delta').textContent = `↑ +${bevGrowth}pp growth over period`;
+
+  document.getElementById('kpi-rev').textContent = '€' + (totalRevenue/1e9).toFixed(0) + 'B';
+  document.getElementById('kpi-rev-sub').textContent = 'gross vehicle revenue';
+
+  const rt = getRegionTotals();
+  const topRegion = rt.sort((a,b) => b.units - a.units)[0];
+  if (topRegion) {
+    document.getElementById('kpi-top-region').textContent = REGION_LABELS[topRegion.region];
+    document.getElementById('kpi-top-region-sub').textContent = fmtNum(topRegion.units) + ' units · #1 market';
+  }
+
+  // Growth
+  const firstYUnits = yt[0]?.units || 0; const lastYUnits = yt[yt.length-1]?.units || 0;
+  const unitGrowth = firstYUnits ? (((lastYUnits - firstYUnits) / firstYUnits) * 100).toFixed(1) : 0;
+  document.getElementById('kpi-units-delta').textContent = `↑ +${unitGrowth}% from ${yt[0]?.year||'—'} to ${yt[yt.length-1]?.year||'—'}`;
+
+  const revGrowth = yt.length >= 2 ? (((yt[yt.length-1].revenue - yt[0].revenue) / (yt[0].revenue||1)) * 100).toFixed(1) : 0;
+  document.getElementById('kpi-rev-delta').textContent = `↑ +${revGrowth}% growth over period`;
+
+  document.getElementById('footer-info').textContent =
+    `Filtered: ${filteredYears().join(', ')} · ${filteredRegions().map(r=>REGION_LABELS[r]).join(', ')}`;
+}
+
+// ===================== CHART BUILDERS =====================
+const chartDefaults = {
+  plugins: { legend: { display: false }, tooltip: { backgroundColor: '#181d2e', borderColor: '#1e2540', borderWidth: 1, titleColor: '#e8eaf6', bodyColor: '#8892b0', titleFont: { family: 'DM Sans', weight: '600' }, bodyFont: { family: 'DM Sans' }, padding: 10, cornerRadius: 6 } },
+  scales: {
+    x: { grid: { color: '#1e2540', drawBorder: false }, ticks: { color: '#8892b0', font: { family: 'DM Sans', size: 10 } } },
+    y: { grid: { color: '#1e2540', drawBorder: false }, ticks: { color: '#8892b0', font: { family: 'DM Sans', size: 10 } } }
+  }
+};
+
+function makeGradient(ctx, color1, color2) {
+  const g = ctx.createLinearGradient(0, 0, 0, 300);
+  g.addColorStop(0, color1);
+  g.addColorStop(1, color2);
+  return g;
+}
+
+function initCharts() {
+  // Sales Trend
+  const stCtx = document.getElementById('salesTrendChart').getContext('2d');
+  const stGrad = makeGradient(stCtx, 'rgba(28,110,243,0.35)', 'rgba(28,110,243,0)');
+  charts.salesTrend = new Chart(stCtx, {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: 'Units Sold', data: [], borderColor: '#1c6ef3', backgroundColor: stGrad, fill: true, tension: 0.4, borderWidth: 2.5, pointBackgroundColor: '#1c6ef3', pointRadius: 4, pointHoverRadius: 7 }] },
+    options: { ...chartDefaults, responsive: true, interaction: { mode: 'index', intersect: false },
+      scales: { ...chartDefaults.scales,
+        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => (v/1e6).toFixed(1)+'M' } }
+      }
+    }
+  });
+
+  // BEV vs ICE stacked bar
+  const biCtx = document.getElementById('bevIceChart').getContext('2d');
+  charts.bevIce = new Chart(biCtx, {
+    type: 'bar',
+    data: { labels: [], datasets: [
+      { label: 'BEV', data: [], backgroundColor: '#10b981', borderRadius: 3, stack: 'a' },
+      { label: 'ICE', data: [], backgroundColor: '#3b82f6', borderRadius: 3, stack: 'a' },
+    ]},
+    options: { ...chartDefaults, responsive: true, plugins: { ...chartDefaults.plugins, legend: { display: false } },
+      scales: { ...chartDefaults.scales,
+        x: { ...chartDefaults.scales.x, stacked: true },
+        y: { ...chartDefaults.scales.y, stacked: true, ticks: { ...chartDefaults.scales.y.ticks, callback: v => (v/1e6).toFixed(1)+'M' } }
+      }
+    }
+  });
+
+  // Region Stacked Bar
+  const rsCtx = document.getElementById('regionStackedChart').getContext('2d');
+  charts.regionStacked = new Chart(rsCtx, {
+    type: 'bar',
+    data: { labels: [], datasets: [] },
+    options: { ...chartDefaults, responsive: true,
+      scales: { ...chartDefaults.scales,
+        x: { ...chartDefaults.scales.x, stacked: true },
+        y: { ...chartDefaults.scales.y, stacked: true, ticks: { ...chartDefaults.scales.y.ticks, callback: v => (v/1e6).toFixed(1)+'M' } }
+      }
+    }
+  });
+
+  // Region Donut
+  const rdCtx = document.getElementById('regionDonutChart').getContext('2d');
+  charts.regionDonut = new Chart(rdCtx, {
+    type: 'doughnut',
+    data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderColor: '#0a0c12', borderWidth: 3, hoverOffset: 8 }] },
+    options: { responsive: true, cutout: '68%', plugins: { legend: { display: false }, tooltip: { ...chartDefaults.plugins.tooltip } } }
+  });
+
+  // Model Bar
+  const mCtx = document.getElementById('modelChart').getContext('2d');
+  charts.model = new Chart(mCtx, {
+    type: 'bar',
+    data: { labels: [], datasets: [{ label: 'Units Sold', data: [], backgroundColor: MODEL_COLORS, borderRadius: 5, borderSkipped: false }] },
+    options: { ...chartDefaults, indexAxis: 'y', responsive: true,
+      plugins: { ...chartDefaults.plugins, legend: { display: false } },
+      scales: {
+        x: { ...chartDefaults.scales.x, ticks: { ...chartDefaults.scales.x.ticks, callback: v => (v/1e3).toFixed(0)+'K' } },
+        y: { ...chartDefaults.scales.y }
+      }
+    }
+  });
+
+  // BEV Trend by region
+  const btCtx = document.getElementById('bevTrendChart').getContext('2d');
+  charts.bevTrend = new Chart(btCtx, {
+    type: 'line',
+    data: { labels: YEARS, datasets: ALL_REGIONS.map(r => ({
+      label: REGION_LABELS[r],
+      data: RAW.bev_by_year_region[r].map(v => (v*100).toFixed(1)),
+      borderColor: REGION_COLORS[r],
+      backgroundColor: 'transparent',
+      tension: 0.4, borderWidth: 2,
+      pointRadius: 3, pointHoverRadius: 6,
+      pointBackgroundColor: REGION_COLORS[r]
+    }))},
+    options: { ...chartDefaults, responsive: true,
+      plugins: { ...chartDefaults.plugins, legend: { display: true, position: 'top', labels: { color: '#8892b0', font: { family: 'DM Sans', size: 10 }, boxWidth: 12, padding: 16 } } },
+      scales: { ...chartDefaults.scales,
+        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' } }
+      }
+    }
+  });
+}
+
+// ===================== UPDATE CHARTS =====================
+function updateCharts() {
+  const yt = getYearTotals();
+  const years = filteredYears();
+
+  // Sales Trend
+  charts.salesTrend.data.labels = years;
+  charts.salesTrend.data.datasets[0].data = yt.map(x => x.units);
+  charts.salesTrend.update();
+
+  // BEV vs ICE
+  const bi = getBevIceTotals();
+  charts.bevIce.data.labels = years;
+  charts.bevIce.data.datasets[0].data = bi.map(x => x.bev);
+  charts.bevIce.data.datasets[1].data = bi.map(x => x.ice);
+  charts.bevIce.update();
+
+  // Region Stacked
+  const matrix = getRegionYearMatrix();
+  charts.regionStacked.data.labels = years;
+  charts.regionStacked.data.datasets = matrix.map(r => ({
+    label: REGION_LABELS[r.region],
+    data: r.data,
+    backgroundColor: REGION_COLORS[r.region] + 'cc',
+    borderRadius: 2,
+    stack: 'a',
+  }));
+  charts.regionStacked.update();
+
+  // Region Donut
+  const rt = getRegionTotals();
+  charts.regionDonut.data.labels = rt.map(r => REGION_LABELS[r.region]);
+  charts.regionDonut.data.datasets[0].data = rt.map(r => r.units);
+  charts.regionDonut.data.datasets[0].backgroundColor = rt.map(r => REGION_COLORS[r.region]);
+  charts.regionDonut.update();
+
+  // Model
+  const mt = getModelTotals();
+  charts.model.data.labels = mt.map(x => x.model);
+  charts.model.data.datasets[0].data = mt.map(x => x.units);
+  charts.model.data.datasets[0].backgroundColor = mt.map((_, i) => MODEL_COLORS[i % MODEL_COLORS.length]);
+  charts.model.update();
+
+  // BEV Trend — update visibility
+  charts.bevTrend.data.datasets.forEach((ds, i) => {
+    ds.hidden = !state.regions.has(ALL_REGIONS[i]);
+  });
+  charts.bevTrend.update();
+
+  // Region Legend
+  const legDiv = document.getElementById('region-legend');
+  legDiv.innerHTML = '';
+  filteredRegions().forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'legend-item';
+    el.innerHTML = `<div class="legend-dot" style="background:${REGION_COLORS[r]}"></div> ${REGION_LABELS[r]}`;
+    legDiv.appendChild(el);
+  });
+}
+
+// ===================== REGION TABLE =====================
+function updateTable() {
+  const rt = getRegionTotals();
+  const totalUnits = rt.reduce((s,r) => s + r.units, 0);
+  const tbody = document.getElementById('region-table-body');
+  tbody.innerHTML = '';
+  rt.sort((a,b) => b.units - a.units).forEach(r => {
+    const share = totalUnits ? ((r.units / totalUnits) * 100).toFixed(1) : 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="region-dot" style="background:${REGION_COLORS[r.region]}"></span>${REGION_LABELS[r.region]}</td>
+      <td class="bold-num">${r.units.toLocaleString()}</td>
+      <td>€${(r.revenue/1e9).toFixed(1)}B</td>
+      <td>
+        <div>${share}%</div>
+        <div class="region-bar" style="width:${share}%;background:${REGION_COLORS[r.region]};max-width:100px"></div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ===================== MAIN UPDATE =====================
+function updateAll() {
+  updateKPIs();
+  updateCharts();
+  updateTable();
+}
+
+// ===================== INIT =====================
+buildSlicers();
+initCharts();
+updateAll();
+</script>
+</body>
+</html>
